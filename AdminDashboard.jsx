@@ -1,0 +1,661 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { 
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell, BarChart, Bar, Legend
+} from 'recharts';
+
+/**
+ * NexaPanel - Admin Dashboard UI Kit
+ * Built with React, Tailwind CSS, and Recharts.
+ * 
+ * FONT IMPORT: Plus Jakarta Sans
+ */
+const FONT_LINK = "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap";
+
+const monthlyRevenue = [
+  { month: 'Jan', revenue: 4500, expenses: 3200 },
+  { month: 'Feb', revenue: 5200, expenses: 3400 },
+  { month: 'Mar', revenue: 4800, expenses: 3100 },
+  { month: 'Apr', revenue: 6100, expenses: 3800 },
+  { month: 'May', revenue: 5900, expenses: 3600 },
+  { month: 'Jun', revenue: 7200, expenses: 4200 },
+  { month: 'Jul', revenue: 6800, expenses: 4000 },
+  { month: 'Aug', revenue: 8400, expenses: 4800 },
+  { month: 'Sep', revenue: 7900, expenses: 4500 },
+  { month: 'Oct', revenue: 9200, expenses: 5100 },
+  { month: 'Nov', revenue: 8800, expenses: 4900 },
+  { month: 'Dec', revenue: 10500, expenses: 5800 },
+];
+
+const trafficSources = [
+  { name: 'Organic', value: 42, color: '#4f7cff' },
+  { name: 'Direct', value: 28, color: '#22c97b' },
+  { name: 'Social', value: 18, color: '#f5a623' },
+  { name: 'Referral', value: 12, color: '#f25c54' },
+];
+
+const weeklyOrders = [
+  { day: 'Mon', orders: 45 },
+  { day: 'Tue', orders: 52 },
+  { day: 'Wed', orders: 38 },
+  { day: 'Thu', orders: 65 },
+  { day: 'Fri', orders: 48 },
+  { day: 'Sat', orders: 72 },
+  { day: 'Sun', orders: 55 },
+];
+
+const topProducts = [
+  { name: 'Aether Wireless Earbuds', category: 'Electronics', units: 85, revenue: 12750 },
+  { name: 'Nova Smartwatch Gen 5', category: 'Wearables', units: 64, revenue: 19200 },
+  { name: 'Zenith Mechanical Keyboard', category: 'Accessories', units: 52, revenue: 7800 },
+  { name: 'Onyx Desk Lamp', category: 'Home Office', units: 41, revenue: 3280 },
+  { name: 'Vector Gaming Mouse', category: 'Electronics', units: 38, revenue: 2660 },
+];
+
+const recentOrders = [
+  { id: '#ORD-7291', customer: 'Alex Johnson', product: 'Aether Earbuds', date: '2024-05-01', amount: 150.00, status: 'Completed' },
+  { id: '#ORD-7292', customer: 'Sarah Miller', product: 'Nova Smartwatch', date: '2024-05-01', amount: 300.00, status: 'Pending' },
+  { id: '#ORD-7293', customer: 'James Wilson', product: 'Zenith Keyboard', date: '2024-05-02', amount: 120.00, status: 'Completed' },
+  { id: '#ORD-7294', customer: 'Elena Rodriguez', product: 'Onyx Lamp', date: '2024-05-02', amount: 80.00, status: 'Cancelled' },
+  { id: '#ORD-7295', customer: 'David Chen', product: 'Vector Mouse', date: '2024-05-03', amount: 70.00, status: 'Completed' },
+  { id: '#ORD-7296', customer: 'Sophie Taylor', product: 'Aether Earbuds', date: '2024-05-03', amount: 150.00, status: 'Pending' },
+  { id: '#ORD-7297', customer: 'Michael Brown', product: 'Nova Smartwatch', date: '2024-05-04', amount: 300.00, status: 'Completed' },
+  { id: '#ORD-7298', customer: 'Emma Davis', product: 'Zenith Keyboard', date: '2024-05-04', amount: 120.00, status: 'Completed' },
+];
+
+// ─── UTILS ───
+
+const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+// ─── SIDEBAR ───
+
+export const Sidebar = ({ collapsed, setCollapsed, activePage, setActivePage }) => {
+  const navItems = [
+    { section: 'MAIN', items: [
+      { id: 'Dashboard', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg> },
+      { id: 'Analytics', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg> },
+      { id: 'Orders', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg> },
+      { id: 'Products', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg> },
+    ]},
+    { section: 'MANAGE', items: [
+      { id: 'Users', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg> },
+      { id: 'Settings', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg> },
+      { id: 'Reports', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg> },
+    ]},
+    { section: 'OTHER', items: [
+      { id: 'Help', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> },
+      { id: 'Logout', icon: (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg> },
+    ]},
+  ];
+
+  return (
+    <aside 
+      className={`fixed top-0 left-0 h-screen bg-card border-r border-default transition-all duration-[250ms] ease-in-out z-50 flex flex-col ${collapsed ? 'w-[64px]' : 'w-[240px]'}`}
+    >
+      <div className="flex items-center justify-between p-4 h-14 border-b border-default overflow-hidden">
+        <div className={`flex items-center gap-3 transition-opacity duration-200 ${collapsed ? 'opacity-0 w-0' : 'opacity-100 w-auto'}`}>
+          <div className="w-8 h-8 rounded-lg bg-accent-blue flex items-center justify-center text-white font-bold">N</div>
+          <span className="font-bold text-lg text-primary whitespace-nowrap">NexaPanel</span>
+        </div>
+        <button 
+          onClick={() => setCollapsed(!collapsed)}
+          className="p-1 rounded-md hover:bg-subtle text-secondary transition-colors"
+        >
+          <svg className={`w-5 h-5 transform transition-transform ${collapsed ? 'rotate-180' : ''}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+          </svg>
+        </button>
+      </div>
+
+      <nav className="flex-1 overflow-y-auto py-4 scrollbar-thin">
+        {navItems.map((section) => (
+          <div key={section.section} className="mb-6">
+            {!collapsed && <p className="px-6 text-[10px] font-bold text-secondary uppercase tracking-widest mb-2">{section.section}</p>}
+            <ul className="space-y-1">
+              {section.items.map((item) => (
+                <li key={item.id}>
+                  <button
+                    onClick={() => setActivePage(item.id)}
+                    className={`w-full flex items-center gap-3 px-6 py-2.5 transition-all duration-150 relative group ${activePage === item.id ? 'text-accent-blue bg-accent-blue/10 border-l-4 border-accent-blue' : 'text-secondary hover:bg-subtle hover:text-primary border-l-4 border-transparent'}`}
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    {!collapsed && <span className="font-medium truncate">{item.id}</span>}
+                    {collapsed && (
+                      <div className="absolute left-16 bg-primary text-card px-2 py-1 rounded text-xs whitespace-nowrap opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity">
+                        {item.id}
+                      </div>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      <div className="p-4 border-t border-default bg-card">
+        <div className={`flex items-center gap-3 ${collapsed ? 'justify-center' : ''}`}>
+          <div className="relative shrink-0">
+            <div className="w-8 h-8 rounded-full bg-accent-amber flex items-center justify-center text-white text-xs font-bold">JD</div>
+            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-accent-green border-2 border-card"></div>
+          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-primary truncate">John Doe</p>
+              <p className="text-[10px] text-secondary font-medium">Administrator</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+};
+
+// ─── TOPBAR ───
+
+export const Topbar = ({ activePage, isDark, setIsDark }) => {
+  return (
+    <header className="h-14 bg-card border-b border-default flex items-center justify-between px-6 sticky top-0 z-40">
+      <h1 className="text-lg font-bold text-primary">{activePage}</h1>
+      
+      <div className="flex-1 max-w-md mx-8">
+        <div className="relative">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Search dashboard..." 
+            className="w-full bg-subtle border border-default rounded-lg py-1.5 pl-10 pr-4 text-sm text-primary placeholder:text-secondary focus:outline-none focus:border-accent-blue"
+          />
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={() => setIsDark(!isDark)}
+          className="p-2 rounded-lg hover:bg-subtle text-secondary transition-all hover:text-primary active:scale-95"
+          title="Toggle Theme"
+        >
+          <svg className={`w-5 h-5 transition-transform duration-300 ${isDark ? 'rotate-0' : 'rotate-[360deg]'}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            {isDark ? (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707-.707M6.343 6.343l-.707-.707M12 5a7 7 0 100 14 7 7 0 000-14z" />
+            ) : (
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+            )}
+          </svg>
+        </button>
+        <button className="p-2 rounded-lg hover:bg-subtle text-secondary relative transition-colors">
+          <svg className="w-5 h-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span className="absolute top-2 right-2 w-2 h-2 bg-accent-red rounded-full border border-card"></span>
+        </button>
+        <div className="w-8 h-8 rounded-full bg-subtle border border-default flex items-center justify-center text-xs font-bold text-primary ml-2 cursor-pointer hover:border-accent-blue transition-colors">
+          JD
+        </div>
+      </div>
+    </header>
+  );
+};
+
+// ─── STAT CARD ───
+
+export const StatCard = ({ icon, label, value, trend, trendUp }) => {
+  return (
+    <div className="bg-card border border-default p-5 rounded-xl hover:scale-[1.015] transition-transform duration-200">
+      <div className="flex justify-between items-start mb-3">
+        <div className={`p-2 rounded-lg ${trendUp ? 'bg-accent-green/10 text-accent-green' : 'bg-accent-red/10 text-accent-red'}`}>
+          {icon}
+        </div>
+        <div className={`flex items-center gap-1 text-xs font-bold ${trendUp ? 'text-accent-green' : 'text-accent-red'}`}>
+          {trendUp ? '↑' : '↓'} {trend}
+        </div>
+      </div>
+      <div>
+        <p className="text-xs font-medium text-secondary mb-1">{label}</p>
+        <h3 className="text-2xl font-bold text-primary tracking-tight">{value}</h3>
+      </div>
+    </div>
+  );
+};
+
+// ─── CHARTS ───
+
+export const RevenueChart = ({ data, isDark }) => {
+  return (
+    <div className="bg-card border border-default p-6 rounded-xl h-[400px] flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="font-bold text-primary">Monthly Revenue</h3>
+        <select className="bg-subtle border border-default rounded text-xs px-2 py-1 text-secondary focus:outline-none">
+          <option>Last 12 Months</option>
+          <option>Last 6 Months</option>
+        </select>
+      </div>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#4f7cff" stopOpacity={0.2}/>
+                <stop offset="95%" stopColor="#4f7cff" stopOpacity={0}/>
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2e3247' : '#dde0eb'} />
+            <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{fill: '#8b91a8', fontSize: 12}} dy={10} />
+            <YAxis axisLine={false} tickLine={false} tick={{fill: '#8b91a8', fontSize: 12}} />
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: isDark ? '#1a1d27' : '#ffffff', 
+                borderColor: isDark ? '#2e3247' : '#dde0eb',
+                color: isDark ? '#f1f3f9' : '#111827',
+                borderRadius: '8px'
+              }}
+              itemStyle={{ color: '#4f7cff' }}
+            />
+            <Area type="monotone" dataKey="revenue" stroke="#4f7cff" strokeWidth={3} fillOpacity={1} fill="url(#colorRev)" />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+export const TrafficPieChart = ({ data, isDark }) => {
+  return (
+    <div className="bg-card border border-default p-6 rounded-xl h-[400px] flex flex-col">
+      <h3 className="font-bold text-primary mb-6">Traffic Sources</h3>
+      <div className="flex-1 min-h-0 flex flex-col justify-center">
+        <ResponsiveContainer width="100%" height={220}>
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={60}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+            >
+              {data.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
+              ))}
+            </Pie>
+            <Tooltip 
+              contentStyle={{ 
+                backgroundColor: isDark ? '#1a1d27' : '#ffffff', 
+                borderColor: isDark ? '#2e3247' : '#dde0eb',
+                borderRadius: '8px'
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+        <div className="grid grid-cols-2 gap-4 mt-6">
+          {data.map((item) => (
+            <div key={item.name} className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }}></div>
+              <div className="flex flex-col">
+                <span className="text-[10px] text-secondary font-bold uppercase">{item.name}</span>
+                <span className="text-sm font-bold text-primary">{item.value}%</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export const OrdersBarChart = ({ data, isDark }) => {
+  return (
+    <div className="bg-card border border-default p-6 rounded-xl h-[350px] flex flex-col">
+      <h3 className="font-bold text-primary mb-6">Weekly Orders</h3>
+      <div className="flex-1 min-h-0">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isDark ? '#2e3247' : '#dde0eb'} />
+            <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{fill: '#8b91a8', fontSize: 12}} dy={10} />
+            <YAxis axisLine={false} tickLine={false} tick={{fill: '#8b91a8', fontSize: 12}} />
+            <Tooltip 
+              cursor={{fill: 'transparent'}}
+              contentStyle={{ 
+                backgroundColor: isDark ? '#1a1d27' : '#ffffff', 
+                borderColor: isDark ? '#2e3247' : '#dde0eb',
+                borderRadius: '8px'
+              }}
+            />
+            <Bar dataKey="orders" fill="#4f7cff" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+};
+
+// ─── TOP PRODUCTS LIST ───
+
+export const TopProductsList = ({ items }) => {
+  return (
+    <div className="bg-card border border-default p-6 rounded-xl h-[350px] flex flex-col">
+      <h3 className="font-bold text-primary mb-6">Top Products</h3>
+      <div className="flex-1 overflow-y-auto space-y-5 scrollbar-thin">
+        {items.map((product) => (
+          <div key={product.name} className="flex flex-col gap-2">
+            <div className="flex justify-between items-end">
+              <div>
+                <p className="text-sm font-bold text-primary">{product.name}</p>
+                <span className="text-[10px] bg-subtle text-secondary px-1.5 py-0.5 rounded font-bold uppercase">{product.category}</span>
+              </div>
+              <p className="text-sm font-bold text-primary">{formatCurrency(product.revenue)}</p>
+            </div>
+            <div className="w-full bg-subtle h-2 rounded-full overflow-hidden">
+              <div 
+                className="bg-accent-blue h-full rounded-full transition-all duration-1000" 
+                style={{ width: `${(product.units / 100) * 100}%` }}
+              ></div>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-[10px] text-secondary font-medium">{product.units} units sold</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// ─── DATA TABLE ───
+
+export const DataTable = ({ rows, isDark }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortConfig, setSortConfig] = useState({ key: 'date', direction: 'desc' });
+  const [currentPage, setCurrentPage] = useState(1);
+  const rowsPerPage = 5;
+
+  const filteredRows = useMemo(() => {
+    return rows.filter(row => row.customer.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [rows, searchTerm]);
+
+  const sortedRows = useMemo(() => {
+    let sortableItems = [...filteredRows];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
+        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [filteredRows, sortConfig]);
+
+  const paginatedRows = useMemo(() => {
+    const start = (currentPage - 1) * rowsPerPage;
+    return sortedRows.slice(start, start + rowsPerPage);
+  }, [sortedRows, currentPage]);
+
+  const requestSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Completed': return 'bg-accent-green/10 text-accent-green';
+      case 'Pending': return 'bg-accent-amber/10 text-accent-amber';
+      case 'Cancelled': return 'bg-accent-red/10 text-accent-red';
+      default: return 'bg-subtle text-secondary';
+    }
+  };
+
+  const totalPages = Math.ceil(sortedRows.length / rowsPerPage);
+
+  return (
+    <div className="bg-card border border-default rounded-xl overflow-hidden flex flex-col">
+      <div className="p-6 border-b border-default flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h3 className="font-bold text-primary">Recent Orders</h3>
+        <div className="relative w-full sm:w-64">
+          <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-secondary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+          <input 
+            type="text" 
+            placeholder="Search customer..." 
+            value={searchTerm}
+            onChange={(e) => {setSearchTerm(e.target.value); setCurrentPage(1);}}
+            className="w-full bg-subtle border border-default rounded-lg py-1.5 pl-10 pr-4 text-sm text-primary focus:outline-none focus:border-accent-blue"
+          />
+        </div>
+      </div>
+      
+      <div className="overflow-x-auto">
+        <table className="w-full text-left">
+          <thead className="bg-subtle/50 border-b border-default text-xs font-bold text-secondary uppercase tracking-wider">
+            <tr>
+              {['id', 'customer', 'product', 'date', 'amount', 'status'].map((key) => (
+                <th 
+                  key={key} 
+                  className="px-6 py-4 cursor-pointer hover:text-primary transition-colors select-none"
+                  onClick={() => requestSort(key)}
+                >
+                  <div className="flex items-center gap-1">
+                    {key.charAt(0).toUpperCase() + key.slice(1)}
+                    <svg className={`w-3 h-3 ${sortConfig.key === key ? 'opacity-100' : 'opacity-0'} ${sortConfig.direction === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                  </div>
+                </th>
+              ))}
+              <th className="px-6 py-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-default">
+            {paginatedRows.map((row) => (
+              <tr key={row.id} className="hover:bg-subtle/30 transition-colors">
+                <td className="px-6 py-4 text-sm font-bold text-primary">{row.id}</td>
+                <td className="px-6 py-4 text-sm text-secondary">{row.customer}</td>
+                <td className="px-6 py-4 text-sm text-secondary">{row.product}</td>
+                <td className="px-6 py-4 text-sm text-secondary">{row.date}</td>
+                <td className="px-6 py-4 text-sm font-bold text-primary">{formatCurrency(row.amount)}</td>
+                <td className="px-6 py-4">
+                  <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${getStatusColor(row.status)}`}>
+                    {row.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-right">
+                  <button className="text-accent-blue text-xs font-bold hover:underline">View</button>
+                </td>
+              </tr>
+            ))}
+            {paginatedRows.length === 0 && (
+              <tr>
+                <td colSpan="7" className="px-6 py-12 text-center text-secondary text-sm">No matching orders found.</td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <div className="p-4 border-t border-default flex justify-between items-center text-xs text-secondary font-medium">
+        <div>
+          Showing {paginatedRows.length > 0 ? (currentPage - 1) * rowsPerPage + 1 : 0} to {Math.min(currentPage * rowsPerPage, sortedRows.length)} of {sortedRows.length} entries
+        </div>
+        <div className="flex gap-2">
+          <button 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => prev - 1)}
+            className="px-3 py-1.5 border border-default rounded-md hover:bg-subtle disabled:opacity-50 transition-colors"
+          >
+            Previous
+          </button>
+          <button 
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => setCurrentPage(prev => prev + 1)}
+            className="px-3 py-1.5 border border-default rounded-md hover:bg-subtle disabled:opacity-50 transition-colors"
+          >
+            Next
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// ─── MAIN APP ───
+
+export default function App() {
+  const [isDark, setIsDark] = useState(() => {
+    const saved = localStorage.getItem('theme');
+    return saved ? saved === 'dark' : true;
+  });
+  const [collapsed, setCollapsed] = useState(false);
+  const [activePage, setActivePage] = useState('Dashboard');
+
+  useEffect(() => {
+    localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  }, [isDark]);
+
+  return (
+    <div className={isDark ? 'dark' : ''}>
+      <style>{`
+        @import url('${FONT_LINK}');
+        
+        :root {
+          --bg-page: #f4f6fb;
+          --bg-card: #ffffff;
+          --bg-subtle: #eef0f7;
+          --border: #dde0eb;
+          --text-primary: #111827;
+          --text-secondary: #6b7280;
+          --accent-blue: #3b68f5;
+          --accent-green: #16a86a;
+          --accent-red: #e53935;
+          --accent-amber: #d48806;
+        }
+
+        .dark {
+          --bg-page: #0f1117;
+          --bg-card: #1a1d27;
+          --bg-subtle: #222636;
+          --border: #2e3247;
+          --text-primary: #f1f3f9;
+          --text-secondary: #8b91a8;
+          --accent-blue: #4f7cff;
+          --accent-green: #22c97b;
+          --accent-red: #f25c54;
+          --accent-amber: #f5a623;
+        }
+
+        body {
+          font-family: 'Plus Jakarta Sans', sans-serif;
+          background-color: var(--bg-page);
+          color: var(--text-primary);
+          margin: 0;
+        }
+
+        .bg-page { background-color: var(--bg-page); }
+        .bg-card { background-color: var(--bg-card); }
+        .bg-subtle { background-color: var(--bg-subtle); }
+        .border-default { border-color: var(--border); }
+        .text-primary { color: var(--text-primary); }
+        .text-secondary { color: var(--text-secondary); }
+        .text-accent-blue { color: var(--accent-blue); }
+        .text-accent-green { color: var(--accent-green); }
+        .text-accent-red { color: var(--accent-red); }
+        .text-accent-amber { color: var(--accent-amber); }
+        .bg-accent-blue { background-color: var(--accent-blue); }
+        .bg-accent-green { background-color: var(--accent-green); }
+        .bg-accent-red { background-color: var(--accent-red); }
+        .bg-accent-amber { background-color: var(--accent-amber); }
+        .border-accent-blue { border-color: var(--accent-blue); }
+
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+      `}</style>
+
+      <div className="min-h-screen flex bg-page text-primary">
+        <Sidebar 
+          collapsed={collapsed} 
+          setCollapsed={setCollapsed} 
+          activePage={activePage} 
+          setActivePage={setActivePage} 
+        />
+        
+        <div className={`flex-1 flex flex-col transition-all duration-300 ${collapsed ? 'ml-[64px]' : 'ml-[240px]'}`}>
+          <Topbar 
+            activePage={activePage} 
+            isDark={isDark} 
+            setIsDark={setIsDark} 
+          />
+          
+          <main className="p-6 overflow-y-auto">
+            {activePage === 'Dashboard' ? (
+              <div className="space-y-6">
+                {/* Section 1: KPI Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  <StatCard 
+                    label="Total Revenue" 
+                    value="$48,295" 
+                    trend="12.4%" 
+                    trendUp={true}
+                    icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>}
+                  />
+                  <StatCard 
+                    label="New Users" 
+                    value="3,842" 
+                    trend="8.1%" 
+                    trendUp={true}
+                    icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>}
+                  />
+                  <StatCard 
+                    label="Active Orders" 
+                    value="621" 
+                    trend="3.7%" 
+                    trendUp={false}
+                    icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" /></svg>}
+                  />
+                  <StatCard 
+                    label="Bounce Rate" 
+                    value="38.5%" 
+                    trend="1.2%" 
+                    trendUp={true} // Down is good for bounce rate
+                    icon={<svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" /></svg>}
+                  />
+                </div>
+
+                {/* Section 2: Main Charts */}
+                <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+                  <div className="lg:col-span-6">
+                    <RevenueChart data={monthlyRevenue} isDark={isDark} />
+                  </div>
+                  <div className="lg:col-span-4">
+                    <TrafficPieChart data={trafficSources} isDark={isDark} />
+                  </div>
+                </div>
+
+                {/* Section 3: Secondary Row */}
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  <OrdersBarChart data={weeklyOrders} isDark={isDark} />
+                  <TopProductsList items={topProducts} />
+                </div>
+
+                {/* Section 4: Data Table */}
+                <DataTable rows={recentOrders} isDark={isDark} />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-24 text-center">
+                <div className="w-16 h-16 rounded-full bg-subtle flex items-center justify-center mb-4">
+                  <svg className="w-8 h-8 text-secondary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                </div>
+                <h2 className="text-xl font-bold mb-2">{activePage} Content Placeholder</h2>
+                <p className="text-secondary max-w-sm">This section is currently under development for the {activePage} module.</p>
+              </div>
+            )}
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}
